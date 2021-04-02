@@ -4,7 +4,7 @@
 #define TODO_VERSION                    "0.1"
 #define TODO_VERSION_NAME               "Version 0.1"
 #define TODO_VERSION_DATE			    "02/04/2021"
-#define TODO_VERSION_TIME			    "13:46 CST"
+#define TODO_VERSION_TIME			    "16:43 CST"
 #define TODO_VERSION_AUTHOR			    "Erick Salas"
 
 // print full todo version information
