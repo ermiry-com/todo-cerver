@@ -7,7 +7,10 @@
 
 #include <cerver/collections/dlist.h>
 
+#include "errors.h"
+
 #include "models/item.h"
+#include "models/user.h"
 
 #define DEFAULT_TRANS_POOL_INIT			32
 
@@ -38,10 +41,8 @@ extern u8 todo_item_get_by_id_and_user_to_json (
 	char **json, size_t *json_len
 );
 
-extern Item *todo_item_create (
-	const char *user_id,
-	const char *title,
-	const char *description
+extern TodoError todo_item_create (
+	const User *user, const String *request_body
 );
 
 extern void todo_item_delete (void *item_ptr);

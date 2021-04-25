@@ -20,9 +20,6 @@
 #include "controllers/items.h"
 #include "controllers/users.h"
 
-#include "models/item.h"
-#include "models/user.h"
-
 // GET /api/todo/items
 // get all the authenticated user's items
 void todo_items_handler (
@@ -59,90 +56,6 @@ void todo_items_handler (
 
 }
 
-static void todo_item_parse_json (
-	json_t *json_body,
-	const char **title,
-	const char **description
-) {
-
-	// get values from json to create a new item
-	const char *key = NULL;
-	json_t *value = NULL;
-	if (json_typeof (json_body) == JSON_OBJECT) {
-		json_object_foreach (json_body, key, value) {
-			if (!strcmp (key, "title")) {
-				*title = json_string_value (value);
-				#ifdef TODO_DEBUG
-				(void) printf ("title: \"%s\"\n", *title);
-				#endif
-			}
-
-			else if (!strcmp (key, "description")) {
-				*description = json_string_value (value);
-				#ifdef TODO_DEBUG
-				(void) printf ("description: \"%s\"\n", *description);
-				#endif
-			}
-		}
-	}
-
-}
-
-static TodoError todo_item_create_handler_internal (
-	Item **item,
-	const char *user_id, const String *request_body
-) {
-
-	TodoError error = TODO_ERROR_NONE;
-
-	if (request_body) {
-		const char *title = NULL;
-		const char *description = NULL;
-
-		json_error_t json_error =  { 0 };
-		json_t *json_body = json_loads (request_body->str, 0, &json_error);
-		if (json_body) {
-			todo_item_parse_json (
-				json_body,
-				&title, &description
-			);
-
-			if (title) {
-				*item = todo_item_create (
-					user_id,
-					title, description
-				);
-
-				if (*item == NULL) error = TODO_ERROR_SERVER_ERROR;
-			}
-
-			else {
-				error = TODO_ERROR_MISSING_VALUES;
-			}
-
-			json_decref (json_body);
-		}
-
-		else {
-			cerver_log_error (
-				"json_loads () - json error on line %d: %s\n", 
-				json_error.line, json_error.text
-			);
-
-			error = TODO_ERROR_BAD_REQUEST;
-		}
-	}
-
-	else {
-		cerver_log_error ("Missing request body to create item!");
-
-		error = TODO_ERROR_BAD_REQUEST;
-	}
-
-	return error;
-
-}
-
 // POST /api/todo/items
 // a user has requested to create a new item
 void todo_item_create_handler (
@@ -152,41 +65,17 @@ void todo_item_create_handler (
 
 	User *user = (User *) request->decoded_data;
 	if (user) {
-		Item *item = NULL;
-
-		TodoError error = todo_item_create_handler_internal (
-			&item,
-			user->id, request->body
-		);
-
-		if (error == TODO_ERROR_NONE) {
-			#ifdef TODO_DEBUG
-			item_print (item);
-			#endif
-
-			if (!item_insert_one (item)) {
-				// update users values
-				(void) user_add_items (user);
-
-				// return success to user
+		TodoError error = todo_item_create (user, request->body);
+		switch (error) {
+			case TODO_ERROR_NONE: {
 				(void) http_response_send (
-					item_created_success,
-					http_receive
+					item_created_success, http_receive
 				);
-			}
+			} break;
 
-			else {
-				(void) http_response_send (
-					item_created_bad,
-					http_receive
-				);
-			}
-			
-			todo_item_delete (item);
-		}
-
-		else {
-			todo_error_send_response (error, http_receive);
+			default: {
+				todo_error_send_response (error, http_receive);
+			} break;
 		}
 	}
 
