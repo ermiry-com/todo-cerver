@@ -337,7 +337,98 @@ TodoError todo_item_create (
 	}
 
 	else {
+		#ifdef TODO_DEBUG
 		cerver_log_error ("Missing request body to create item!");
+		#endif
+
+		error = TODO_ERROR_BAD_REQUEST;
+	}
+
+	return error;
+
+}
+
+static TodoError todo_item_update_parse_json (
+	Item *item, const String *request_body
+) {
+
+	TodoError error = TODO_ERROR_NONE;
+
+	const char *title = NULL;
+	const char *description = NULL;
+
+	json_error_t json_error =  { 0 };
+	json_t *json_body = json_loads (request_body->str, 0, &json_error);
+	if (json_body) {
+		todo_item_parse_json (
+			json_body,
+			&title, &description
+		);
+
+		if (title) {
+			(void) strncpy (item->title, title, ITEM_TITLE_LEN - 1);
+			item->title_len = strlen (item->title);
+		}
+
+		if (description) {
+			(void) strncpy (item->description, description, ITEM_DESCRIPTION_LEN - 1);
+			item->description_len = strlen (item->description);
+		}
+
+		json_decref (json_body);
+	}
+
+	else {
+		cerver_log_error (
+			"json_loads () - json error on line %d: %s\n", 
+			json_error.line, json_error.text
+		);
+
+		error = TODO_ERROR_BAD_REQUEST;
+	}
+
+	return error;
+
+}
+
+TodoError todo_item_update (
+	const User *user, const String *item_id,
+	const String *request_body
+) {
+
+	TodoError error = TODO_ERROR_NONE;
+
+	if (request_body) {
+		Item *item = todo_item_get_by_id_and_user (
+			item_id, &user->oid
+		);
+
+		if (item) {
+			if (todo_item_update_parse_json (
+				item, request_body
+			) == TODO_ERROR_NONE) {
+				// update the item in the db
+				if (item_update_one (item)) {
+					error = TODO_ERROR_SERVER_ERROR;
+				}
+			}
+
+			todo_item_delete (item);
+		}
+
+		else {
+			#ifdef TODO_DEBUG
+			cerver_log_error ("Item was not found!");
+			#endif
+
+			error = TODO_ERROR_BAD_REQUEST;
+		}
+	}
+
+	else {
+		#ifdef TODO_DEBUG
+		cerver_log_error ("Missing request body to update item!");
+		#endif
 
 		error = TODO_ERROR_BAD_REQUEST;
 	}

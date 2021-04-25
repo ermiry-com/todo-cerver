@@ -45,6 +45,11 @@ extern TodoError todo_item_create (
 	const User *user, const String *request_body
 );
 
+extern TodoError todo_item_update (
+	const User *user, const String *item_id,
+	const String *request_body
+);
+
 extern void todo_item_delete (void *item_ptr);
 
 #endif

@@ -130,55 +130,6 @@ void todo_item_get_handler (
 
 }
 
-static u8 todo_item_update_handler_internal (
-	Item *item, const String *request_body
-) {
-
-	u8 retval = 1;
-
-	if (request_body) {
-		const char *title = NULL;
-		const char *description = NULL;
-
-		json_error_t error =  { 0 };
-		json_t *json_body = json_loads (request_body->str, 0, &error);
-		if (json_body) {
-			todo_item_parse_json (
-				json_body,
-				&title, &description
-			);
-
-			if (title) {
-				(void) strncpy (item->title, title, ITEM_TITLE_LEN - 1);
-				item->title_len = strlen (item->title);
-			}
-
-			if (description) {
-				(void) strncpy (item->description, description, ITEM_DESCRIPTION_LEN - 1);
-				item->description_len = strlen (item->description);
-			}
-
-			json_decref (json_body);
-
-			retval = 0;
-		}
-
-		else {
-			cerver_log_error (
-				"json_loads () - json error on line %d: %s\n", 
-				error.line, error.text
-			);
-		}
-	}
-
-	else {
-		cerver_log_error ("Missing request body to update item!");
-	}
-
-	return retval;
-
-}
-
 // POST /api/todo/items/:id/update
 // a user wants to update an existing item
 void todo_item_update_handler (
@@ -188,32 +139,19 @@ void todo_item_update_handler (
 
 	User *user = (User *) request->decoded_data;
 	if (user) {
-		bson_oid_init_from_string (&user->oid, user->id);
-
-		Item *item = todo_item_get_by_id_and_user (
-			request->params[0], &user->oid
+		TodoError error = todo_item_update (
+			user, request->params[0],
+			request->body
 		);
 
-		if (item) {
-			// get update values
-			if (!todo_item_update_handler_internal (
-				item, request->body
-			)) {
-				// update the item in the db
-				if (!item_update_one (item)) {
-					(void) http_response_send (oki_doki, http_receive);
-				}
+		switch (error) {
+			case TODO_ERROR_NONE: {
+				(void) http_response_send (oki_doki, http_receive);
+			} break;
 
-				else {
-					(void) http_response_send (server_error, http_receive);
-				}
-			}
-
-			todo_item_delete (item);
-		}
-
-		else {
-			(void) http_response_send (bad_request_error, http_receive);
+			default: {
+				todo_error_send_response (error, http_receive);
+			} break;
 		}
 	}
 
