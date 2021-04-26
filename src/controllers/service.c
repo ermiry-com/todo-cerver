@@ -40,7 +40,7 @@ unsigned int todo_service_init (void) {
 	}
 
 	catch_all = http_response_json_key_value (
-		HTTP_STATUS_OK, "msg", "Tiny Todo Service!"
+		HTTP_STATUS_OK, "msg", "Todo Service!"
 	);
 
 	if (

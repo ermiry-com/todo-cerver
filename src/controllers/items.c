@@ -14,7 +14,10 @@
 #include <cmongo/crud.h>
 #include <cmongo/select.h>
 
+#include "errors.h"
+
 #include "models/item.h"
+#include "models/user.h"
 
 #include "controllers/items.h"
 
@@ -196,7 +199,36 @@ u8 todo_item_get_by_id_and_user_to_json (
 
 }
 
-Item *todo_item_create (
+static void todo_item_parse_json (
+	json_t *json_body,
+	const char **title,
+	const char **description
+) {
+
+	// get values from json to create a new item
+	const char *key = NULL;
+	json_t *value = NULL;
+	if (json_typeof (json_body) == JSON_OBJECT) {
+		json_object_foreach (json_body, key, value) {
+			if (!strcmp (key, "title")) {
+				*title = json_string_value (value);
+				#ifdef TODO_DEBUG
+				(void) printf ("title: \"%s\"\n", *title);
+				#endif
+			}
+
+			else if (!strcmp (key, "description")) {
+				*description = json_string_value (value);
+				#ifdef TODO_DEBUG
+				(void) printf ("description: \"%s\"\n", *description);
+				#endif
+			}
+		}
+	}
+
+}
+
+static Item *todo_item_create_actual (
 	const char *user_id,
 	const char *title,
 	const char *description
@@ -222,6 +254,186 @@ Item *todo_item_create (
 	}
 
 	return item;
+
+}
+
+static TodoError todo_item_create_parse_json (
+	Item **item,
+	const char *user_id, const String *request_body
+) {
+
+	TodoError error = TODO_ERROR_NONE;
+
+	const char *title = NULL;
+	const char *description = NULL;
+
+	json_error_t json_error =  { 0 };
+	json_t *json_body = json_loads (request_body->str, 0, &json_error);
+	if (json_body) {
+		todo_item_parse_json (
+			json_body,
+			&title, &description
+		);
+
+		if (title) {
+			*item = todo_item_create_actual (
+				user_id,
+				title, description
+			);
+
+			if (*item == NULL) error = TODO_ERROR_SERVER_ERROR;
+		}
+
+		else {
+			error = TODO_ERROR_MISSING_VALUES;
+		}
+
+		json_decref (json_body);
+	}
+
+	else {
+		cerver_log_error (
+			"json_loads () - json error on line %d: %s\n", 
+			json_error.line, json_error.text
+		);
+
+		error = TODO_ERROR_BAD_REQUEST;
+	}
+
+	return error;
+
+}
+
+TodoError todo_item_create (
+	const User *user, const String *request_body
+) {
+
+	TodoError error = TODO_ERROR_NONE;
+
+	if (request_body) {
+		Item *item = NULL;
+
+		error = todo_item_create_parse_json (
+			&item,
+			user->id, request_body
+		);
+
+		if (error == TODO_ERROR_NONE) {
+			#ifdef TODO_DEBUG
+			item_print (item);
+			#endif
+
+			if (!item_insert_one (item)) {
+				// update users values
+				(void) user_add_items (user);
+			}
+
+			else {
+				error = TODO_ERROR_SERVER_ERROR;
+			}
+			
+			todo_item_delete (item);
+		}
+	}
+
+	else {
+		#ifdef TODO_DEBUG
+		cerver_log_error ("Missing request body to create item!");
+		#endif
+
+		error = TODO_ERROR_BAD_REQUEST;
+	}
+
+	return error;
+
+}
+
+static TodoError todo_item_update_parse_json (
+	Item *item, const String *request_body
+) {
+
+	TodoError error = TODO_ERROR_NONE;
+
+	const char *title = NULL;
+	const char *description = NULL;
+
+	json_error_t json_error =  { 0 };
+	json_t *json_body = json_loads (request_body->str, 0, &json_error);
+	if (json_body) {
+		todo_item_parse_json (
+			json_body,
+			&title, &description
+		);
+
+		if (title) {
+			(void) strncpy (item->title, title, ITEM_TITLE_LEN - 1);
+			item->title_len = strlen (item->title);
+		}
+
+		if (description) {
+			(void) strncpy (item->description, description, ITEM_DESCRIPTION_LEN - 1);
+			item->description_len = strlen (item->description);
+		}
+
+		json_decref (json_body);
+	}
+
+	else {
+		cerver_log_error (
+			"json_loads () - json error on line %d: %s\n", 
+			json_error.line, json_error.text
+		);
+
+		error = TODO_ERROR_BAD_REQUEST;
+	}
+
+	return error;
+
+}
+
+TodoError todo_item_update (
+	const User *user, const String *item_id,
+	const String *request_body
+) {
+
+	TodoError error = TODO_ERROR_NONE;
+
+	if (request_body) {
+		Item *item = todo_item_get_by_id_and_user (
+			item_id, &user->oid
+		);
+
+		if (item) {
+			if (todo_item_update_parse_json (
+				item, request_body
+			) == TODO_ERROR_NONE) {
+				// update the item in the db
+				if (item_update_one (item)) {
+					error = TODO_ERROR_SERVER_ERROR;
+				}
+			}
+
+			todo_item_delete (item);
+		}
+
+		else {
+			#ifdef TODO_DEBUG
+			cerver_log_error ("Item was not found!");
+			#endif
+
+			error = TODO_ERROR_BAD_REQUEST;
+		}
+	}
+
+	else {
+		#ifdef TODO_DEBUG
+		cerver_log_error ("Missing request body to update item!");
+		#endif
+
+		error = TODO_ERROR_BAD_REQUEST;
+	}
+
+	return error;
 
 }
 

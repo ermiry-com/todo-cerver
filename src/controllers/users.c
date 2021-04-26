@@ -33,12 +33,6 @@ static CMongoSelect *user_login_select = NULL;
 const bson_t *user_items_query_opts = NULL;
 static CMongoSelect *user_items_select = NULL;
 
-const bson_t *user_categories_query_opts = NULL;
-static CMongoSelect *user_categories_select = NULL;
-
-const bson_t *user_places_query_opts = NULL;
-static CMongoSelect *user_places_select = NULL;
-
 HttpResponse *users_works = NULL;
 HttpResponse *missing_user_values = NULL;
 HttpResponse *wrong_password = NULL;
@@ -87,21 +81,9 @@ static unsigned int todo_users_init_query_opts (void) {
 
 	user_items_query_opts = mongo_find_generate_opts (user_items_select);
 
-	user_categories_select = cmongo_select_new ();
-	(void) cmongo_select_insert_field (user_categories_select, "categoriesCount");
-
-	user_categories_query_opts = mongo_find_generate_opts (user_categories_select);
-
-	user_places_select = cmongo_select_new ();
-	(void) cmongo_select_insert_field (user_places_select, "placesCount");
-
-	user_places_query_opts = mongo_find_generate_opts (user_places_select);
-
 	if (
 		user_login_query_opts
 		&& user_items_query_opts
-		&& user_categories_query_opts
-		&& user_places_query_opts
 	) retval = 0;
 
 	return retval;
@@ -162,12 +144,6 @@ void todo_users_end (void) {
 
 	cmongo_select_delete (user_items_select);
 	bson_destroy ((bson_t *) user_items_query_opts);
-
-	cmongo_select_delete (user_categories_select);
-	bson_destroy ((bson_t *) user_categories_query_opts);
-
-	cmongo_select_delete (user_places_select);
-	bson_destroy ((bson_t *) user_places_query_opts);
 
 	http_response_delete (users_works);
 	http_response_delete (missing_user_values);

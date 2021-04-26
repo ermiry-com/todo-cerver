@@ -14,8 +14,6 @@ struct _HttpResponse;
 
 extern const bson_t *user_login_query_opts;
 extern const bson_t *user_items_query_opts;
-extern const bson_t *user_categories_query_opts;
-extern const bson_t *user_places_query_opts;
 
 extern struct _HttpResponse *users_works;
 extern struct _HttpResponse *missing_user_values;
