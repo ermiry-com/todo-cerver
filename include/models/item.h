@@ -79,9 +79,9 @@ extern mongoc_cursor_t *items_get_all_by_user (
 	const bson_oid_t *user_oid, const bson_t *opts
 );
 
-extern char *items_get_all_by_user_to_json (
+extern unsigned int items_get_all_by_user_to_json (
 	const bson_oid_t *user_oid, const bson_t *opts,
-	size_t *json_len
+	char **json, size_t *json_len
 );
 
 extern unsigned int item_insert_one (

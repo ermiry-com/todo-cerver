@@ -311,27 +311,28 @@ mongoc_cursor_t *items_get_all_by_user (
 
 }
 
-char *items_get_all_by_user_to_json (
+unsigned int items_get_all_by_user_to_json (
 	const bson_oid_t *user_oid, const bson_t *opts,
-	size_t *json_len
+	char **json, size_t *json_len
 ) {
 
-	char *json = NULL;
+	unsigned int retval = 1;
 
 	if (user_oid) {
 		bson_t *query = bson_new ();
 		if (query) {
 			(void) bson_append_oid (query, "user", -1, user_oid);
 
-			json = mongo_find_all_cursor_with_opts_to_json (
+			retval = mongo_find_all_to_json (
 				items_model,
 				query, opts,
-				"items", json_len
+				"items",
+				json, json_len
 			);
 		}
 	}
 
-	return json;
+	return retval;
 
 }
 

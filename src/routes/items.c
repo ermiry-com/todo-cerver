@@ -30,19 +30,25 @@ void todo_items_handler (
 	User *user = (User *) request->decoded_data;
 	if (user) {
 		size_t json_len = 0;
-		char *json = items_get_all_by_user_to_json (
+		char *json = NULL;
+
+		if (!items_get_all_by_user_to_json (
 			&user->oid, item_no_user_query_opts,
-			&json_len
-		);
+			&json, &json_len
+		)) {
+			if (json) {
+				(void) http_response_json_custom_reference_send (
+					http_receive,
+					HTTP_STATUS_OK,
+					json, json_len
+				);
 
-		if (json) {
-			(void) http_response_json_custom_reference_send (
-				http_receive,
-				HTTP_STATUS_OK,
-				json, json_len
-			);
+				free (json);
+			}
 
-			free (json);
+			else {
+				(void) http_response_send (no_user_item, http_receive);
+			}
 		}
 
 		else {
