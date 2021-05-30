@@ -37,12 +37,15 @@ unsigned int CERVER_RECEIVE_BUFFER_SIZE = CERVER_DEFAULT_RECEIVE_BUFFER_SIZE;
 unsigned int CERVER_TH_THREADS = CERVER_DEFAULT_POOL_THREADS;
 unsigned int CERVER_CONNECTION_QUEUE = CERVER_DEFAULT_CONNECTION_QUEUE;
 
-static const String *MONGO_URI = NULL;
-static const String *MONGO_APP_NAME = NULL;
-static const String *MONGO_DB = NULL;
+static char MONGO_URI[MONGO_URI_SIZE] = { 0 };
+static char MONGO_APP_NAME[MONGO_APP_NAME_SIZE] = { 0 };
+static char MONGO_DB[MONGO_DB_SIZE] = { 0 };
 
-const String *PRIV_KEY = NULL;
-const String *PUB_KEY = NULL;
+static char REAL_PRIV_KEY[PRIV_KEY_SIZE] = { 0 };
+const char *PRIV_KEY = REAL_PRIV_KEY;
+
+static char REAL_PUB_KEY[PUB_KEY_SIZE] = { 0 };
+const char *PUB_KEY = REAL_PUB_KEY;
 
 bool ENABLE_USERS_ROUTES = false;
 
@@ -139,7 +142,11 @@ static unsigned int todo_env_get_mongo_app_name (void) {
 
 	char *mongo_app_name_env = getenv ("MONGO_APP_NAME");
 	if (mongo_app_name_env) {
-		MONGO_APP_NAME = str_new (mongo_app_name_env);
+		(void) strncpy (
+			MONGO_APP_NAME,
+			mongo_app_name_env,
+			MONGO_APP_NAME_SIZE - 1
+		);
 
 		retval = 0;
 	}
@@ -158,7 +165,11 @@ static unsigned int todo_env_get_mongo_db (void) {
 
 	char *mongo_db_env = getenv ("MONGO_DB");
 	if (mongo_db_env) {
-		MONGO_DB = str_new (mongo_db_env);
+		(void) strncpy (
+			MONGO_DB,
+			mongo_db_env,
+			MONGO_DB_SIZE - 1
+		);
 
 		retval = 0;
 	}
@@ -177,7 +188,11 @@ static unsigned int todo_env_get_mongo_uri (void) {
 
 	char *mongo_uri_env = getenv ("MONGO_URI");
 	if (mongo_uri_env) {
-		MONGO_URI = str_new (mongo_uri_env);
+		(void) strncpy (
+			MONGO_URI,
+			mongo_uri_env,
+			MONGO_URI_SIZE - 1
+		);
 
 		retval = 0;
 	}
@@ -196,7 +211,11 @@ static unsigned int todo_env_get_private_key (void) {
 
 	char *priv_key_env = getenv ("PRIV_KEY");
 	if (priv_key_env) {
-		PRIV_KEY = str_new (priv_key_env);
+		(void) strncpy (
+			REAL_PRIV_KEY,
+			priv_key_env,
+			PRIV_KEY_SIZE - 1
+		);
 
 		retval = 0;
 	}
@@ -215,7 +234,11 @@ static unsigned int todo_env_get_public_key (void) {
 
 	char *pub_key_env = getenv ("PUB_KEY");
 	if (pub_key_env) {
-		PUB_KEY = str_new (pub_key_env);
+		(void) strncpy (
+			REAL_PUB_KEY,
+			pub_key_env,
+			PUB_KEY_SIZE - 1
+		);
 
 		retval = 0;
 	}
@@ -287,9 +310,9 @@ static unsigned int todo_mongo_connect (void) {
 
 	bool connected_to_mongo = false;
 
-	mongo_set_uri (MONGO_URI->str);
-	mongo_set_app_name (MONGO_APP_NAME->str);
-	mongo_set_db_name (MONGO_DB->str);
+	mongo_set_uri (MONGO_URI);
+	mongo_set_app_name (MONGO_APP_NAME);
+	mongo_set_db_name (MONGO_DB);
 
 	if (!mongo_connect ()) {
 		// test mongo connection
@@ -362,13 +385,6 @@ unsigned int todo_end (void) {
 	todo_items_end ();
 
 	todo_service_end ();
-
-	str_delete ((String *) MONGO_URI);
-	str_delete ((String *) MONGO_APP_NAME);
-	str_delete ((String *) MONGO_DB);
-
-	str_delete ((String *) PRIV_KEY);
-	str_delete ((String *) PUB_KEY);
 
 	return errors;
 
