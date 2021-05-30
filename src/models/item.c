@@ -107,7 +107,7 @@ static void item_doc_parse (
 				(void) strncpy (
 					item->title,
 					value->value.v_utf8.str,
-					ITEM_TITLE_LEN - 1
+					ITEM_TITLE_SIZE - 1
 				);
 
 				item->title_len = strlen (item->title);
@@ -117,7 +117,7 @@ static void item_doc_parse (
 				(void) strncpy (
 					item->description,
 					value->value.v_utf8.str,
-					ITEM_TITLE_LEN - 1
+					ITEM_TITLE_SIZE - 1
 				);
 
 				item->description_len = strlen (item->description);
