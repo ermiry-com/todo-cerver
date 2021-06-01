@@ -254,7 +254,7 @@ void *todo_user_parse_from_json (void *user_json_ptr) {
 
 		if (!json_unpack (
 			user_json,
-			"{s:s, s:i, s:s, s:s, s:s, s:s}",
+			"{s:s, s:i, s:s, s:s, s:s}",
 			"email", &email,
 			"iat", &user->iat,
 			"id", &id,
