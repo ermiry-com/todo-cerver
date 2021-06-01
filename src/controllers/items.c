@@ -404,9 +404,11 @@ TodoError todo_item_update (
 		);
 
 		if (item) {
-			if (todo_item_update_parse_json (
+			error = todo_item_update_parse_json (
 				item, request_body
-			) == TODO_ERROR_NONE) {
+			);
+
+			if (error == TODO_ERROR_NONE) {
 				// update the item in the db
 				if (item_update_one (item)) {
 					error = TODO_ERROR_SERVER_ERROR;
