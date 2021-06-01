@@ -10,9 +10,9 @@
 
 #define ITEMS_COLL_NAME         "items"
 
-#define	ITEM_ID_LEN					32
-#define ITEM_TITLE_LEN				256
-#define ITEM_DESCRIPTION_LEN		1024
+#define	ITEM_ID_SIZE				32
+#define ITEM_TITLE_SIZE				256
+#define ITEM_DESCRIPTION_SIZE		1024
 
 extern unsigned int items_model_init (void);
 
@@ -22,16 +22,16 @@ typedef struct Item {
 
 	// item's unique id
 	bson_oid_t oid;
-	char id[ITEM_ID_LEN];
+	char id[ITEM_ID_SIZE];
 
 	// reference to the owner of this item
 	bson_oid_t user_oid;
 
 	size_t title_len;
-	char title[ITEM_TITLE_LEN];
+	char title[ITEM_TITLE_SIZE];
 
 	size_t description_len;
-	char description[ITEM_DESCRIPTION_LEN];
+	char description[ITEM_DESCRIPTION_SIZE];
 
 	// when the item was made
 	time_t date;

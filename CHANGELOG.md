@@ -1,12 +1,14 @@
 ## General
-- Updated cerver to 2.0b-33 & cmongo to 1.0b-12
-- Added dedicated workflow to create releases
+- Updated cerver to Beta 2.0b-36 in Dockerfiles
+- Refactored main todo values definitions
 
 ## Models
-- Changed items_get_all_by_user_to_json () return value
+- Refactored user model related definitions
+- Refactored item model related definitions
 
 ## Controllers
-- Removed unused values from users controller
-- Refactored catch_all response in service
-- Moved item create methods to controller
-- Moved item update methods to controller
+- Moved register & login workflows to controller
+- Fixed return value in todo_item_update ()
+
+## Routes
+- Refactored users routes with new controller methods

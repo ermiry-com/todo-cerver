@@ -241,12 +241,12 @@ static Item *todo_item_create_actual (
 		bson_oid_init_from_string (&item->user_oid, user_id);
 
 		if (title) {
-			(void) strncpy (item->title, title, ITEM_TITLE_LEN - 1);
+			(void) strncpy (item->title, title, ITEM_TITLE_SIZE - 1);
 			item->title_len = strlen (item->title);
 		}
 
 		if (description) {
-			(void) strncpy (item->description, description, ITEM_DESCRIPTION_LEN - 1);
+			(void) strncpy (item->description, description, ITEM_DESCRIPTION_SIZE - 1);
 			item->description_len = strlen (item->description);
 		}
 
@@ -366,12 +366,12 @@ static TodoError todo_item_update_parse_json (
 		);
 
 		if (title) {
-			(void) strncpy (item->title, title, ITEM_TITLE_LEN - 1);
+			(void) strncpy (item->title, title, ITEM_TITLE_SIZE - 1);
 			item->title_len = strlen (item->title);
 		}
 
 		if (description) {
-			(void) strncpy (item->description, description, ITEM_DESCRIPTION_LEN - 1);
+			(void) strncpy (item->description, description, ITEM_DESCRIPTION_SIZE - 1);
 			item->description_len = strlen (item->description);
 		}
 
@@ -404,9 +404,11 @@ TodoError todo_item_update (
 		);
 
 		if (item) {
-			if (todo_item_update_parse_json (
+			error = todo_item_update_parse_json (
 				item, request_body
-			) == TODO_ERROR_NONE) {
+			);
+
+			if (error == TODO_ERROR_NONE) {
 				// update the item in the db
 				if (item_update_one (item)) {
 					error = TODO_ERROR_SERVER_ERROR;
