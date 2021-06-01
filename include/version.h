@@ -1,10 +1,10 @@
 #ifndef _TODO_VERSION_H_
 #define _TODO_VERSION_H_
 
-#define TODO_VERSION                    "0.2"
-#define TODO_VERSION_NAME               "Version 0.2"
-#define TODO_VERSION_DATE			    "25/04/2021"
-#define TODO_VERSION_TIME			    "22:15 CST"
+#define TODO_VERSION                    "0.3"
+#define TODO_VERSION_NAME               "Version 0.3"
+#define TODO_VERSION_DATE			    "31/05/2021"
+#define TODO_VERSION_TIME			    "19:39 CST"
 #define TODO_VERSION_AUTHOR			    "Erick Salas"
 
 // print full todo version information
